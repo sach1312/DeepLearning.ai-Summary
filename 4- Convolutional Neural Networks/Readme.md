@@ -346,6 +346,7 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 - The best CNN architecture that won the last ImageNet competition is called **ResNet** and it has 152 layers!
 - There are also an architecture called **Inception** that was made by Google that are very useful to learn and apply to your tasks.
 - Reading and trying the mentioned models can boost you and give you a lot of ideas to solve your task.
+- Ideas may be useful in other domains, not just computer vision.
 
 ### Classic networks
 
@@ -353,18 +354,20 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 
 - **LeNet-5**
 
-  - The goal for this model was to identify handwritten digits in a `32x32x1` gray image. Here are the drawing of it:
+  - The goal for this model was to identify handwritten digits in a `32x32x1` grayscale image. Here are the drawing of it:
   - ![](Images/05.png)
   - This model was published in 1998. The last layer wasn't using softmax back then.
-  - It has 60k parameters.
+  - It has 60k parameters. The softmax performs 10-way classfication. 
   - The dimensions of the image decreases as the number of channels increases.
-  - `Conv ==> Pool ==> Conv ==> Pool ==> FC ==> FC ==> softmax` this type of arrangement is quite common.
-  - The activation function used in the paper was Sigmoid and Tanh. Modern implementation uses RELU in most of the cases.
+  - `Conv ==> Pool ==> Conv ==> Pool ==> FC ==> FC ==> softmax` this type of arrangement is quite common. (note that FC just connects some nodes to some other nodes.)
+  - In the original LeCun paper on LeNet, the activation function used in the paper was Sigmoid and Tanh. Modern implementation uses RELU in most of the cases.
+  - Moreover, since the paper was written at a time when computation was not developed yet, it was common to have some filters look at specific channels of the input block. This was to conserve computational power, and is quite irrelevant today. 
+  - The paper also used a sigmoid non-linearity after the pooling layer. 
   - [[LeCun et al., 1998. Gradient-based learning applied to document recognition]](http://ieeexplore.ieee.org/document/726791/?reload=true)
 
 - **AlexNet**
 
-  - Named after Alex Krizhevsky who was the first author of this paper. The other authors includes Geoffrey Hinton.
+  - Named after Alex Krizhevsky who was the first author of this paper. The other authors include Geoffrey Hinton and Ilya Sutskever.
 
   - The goal for the model was the ImageNet challenge which classifies images into 1000 classes. Here are the drawing of the model:
 
@@ -380,12 +383,12 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 
   - Has 60 Million parameter compared to 60k parameter of LeNet-5.
 
-  - It used the RELU activation function.
+  - It used the ReLU activation function.
 
   - The original paper contains Multiple GPUs and Local Response normalization (RN).
 
-    - Multiple GPUs were used because the GPUs were not so fast back then.
-    - Researchers proved that Local Response normalization doesn't help much so for now don't bother yourself for understanding or implementing it. 
+    - Multiple GPUs were used because the GPUs were not so fast back then. The layers were split across GPUs. 
+    - Essentially, local RN just normalizes all values across all channels, while looking down from one block. Researchers proved that Local Response normalization doesn't help much so for now don't bother yourself for understanding or implementing it. 
 
   - This paper convinced the computer vision researchers that deep learning is so important.
 
@@ -400,13 +403,14 @@ Here is the course summary as given on the course [link](https://www.coursera.or
     - MAX-POOL = 2 X 2 , s = 2
   - Here are the architecture:
     - ![](Images/07.png)
-  - This network is large even by modern standards. It has around 138 million parameters.
+  - Since the convolutions are 'same' i.e appropriate padding is done beforehand, the dimensions after a convolutional operation remains the same. 
+  - This network is large even by modern standards. It has around 138 million parameters. However, it is also quite simple, as all the increments were relatively uniform in nature (doubling of number of filters, etc).
     - Most of the parameters are in the fully connected layers.
   - It has a total memory of 96MB per image for only forward propagation!
     - Most memory are in the earlier layers.
   - Number of filters increases from 64 to 128 to 256 to 512. 512 was made twice.
   - Pooling was the only one who is responsible for shrinking the dimensions.
-  - There are another version called **VGG-19** which is a bigger version. But most people uses the VGG-16 instead of the VGG-19 because it does the same.
+  - There are another version called **VGG-19** which is a bigger version of tjos network. But most people uses the VGG-16 instead of the VGG-19 because it performs just as well. 
   - VGG paper is attractive it tries to make some rules regarding using CNNs.
   - [[Simonyan & Zisserman 2015. Very deep convolutional networks for large-scale image recognition]](https://arxiv.org/abs/1409.1556)
 
@@ -415,8 +419,9 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 - Very, very deep NNs are difficult to train because of vanishing and exploding gradients problems.
 - In this section we will learn about skip connection which makes you take the activation from one layer and suddenly feed it to another layer even much deeper in NN which allows you to train large NNs even with layers greater than 100.
 - **Residual block**
-  - ResNets are built out of some Residual blocks.
+  - ResNets are built out of Residual blocks.
   - ![](Images/08.png)
+  - 
   - They add a shortcut/skip connection before the second activation.
   - The authors of this block find that you can train a deeper NNs using stacking this block.
   - [[He et al., 2015. Deep residual networks for image recognition]](https://arxiv.org/abs/1512.03385)
