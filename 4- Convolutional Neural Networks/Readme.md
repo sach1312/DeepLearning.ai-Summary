@@ -410,7 +410,7 @@ Here is the course summary as given on the course [link](https://www.coursera.or
     - Most memory are in the earlier layers.
   - Number of filters increases from 64 to 128 to 256 to 512. 512 was made twice.
   - Pooling was the only one who is responsible for shrinking the dimensions.
-  - There are another version called **VGG-19** which is a bigger version of tjos network. But most people uses the VGG-16 instead of the VGG-19 because it performs just as well. 
+  - There are another version called **VGG-19** which is a bigger version of this network. But most people uses the VGG-16 instead of the VGG-19 because it performs just as well. 
   - VGG paper is attractive it tries to make some rules regarding using CNNs.
   - [[Simonyan & Zisserman 2015. Very deep convolutional networks for large-scale image recognition]](https://arxiv.org/abs/1409.1556)
 
@@ -421,62 +421,68 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 - **Residual block**
   - ResNets are built out of Residual blocks.
   - ![](Images/08.png)
-  - 
-  - They add a shortcut/skip connection before the second activation.
+  - There are two connections, the 'main' and the 'shortcut/skip connection'. 
+  - They add a shortcut/skip connection before the ReLU nonlinearity, so what passes into the ReLU block is not just `z[l+2]`, it is `z[l+2]+a[l]`.
   - The authors of this block find that you can train a deeper NNs using stacking this block.
   - [[He et al., 2015. Deep residual networks for image recognition]](https://arxiv.org/abs/1512.03385)
 - **Residual Network**
-  - Are a NN that consists of some Residual blocks.
+  - Are a NN that consists of some Residual blocks. Any network without skip connections is a 'plain network'. 
   - ![](Images/09.png)
+  - The above network has **5** residual blocks. 
   - These networks can go deeper without hurting the performance. In the normal NN - Plain networks - the theory tell us that if we go deeper we will get a better solution to our problem, but because of the vanishing and exploding gradients problems the performance of the network suffers as it goes deeper. Thanks to Residual Network we can go deeper as we want now.
   - ![](Images/10.png)
   - On the left is the normal NN and on the right are the ResNet. As you can see the performance of ResNet increases as the network goes deeper.
   - In some cases going deeper won't effect the performance and that depends on the problem on your hand.
-  - Some people are trying to train 1000 layer now which isn't used in practice. 
+  - Some people are trying to train 1000 layer now (which isn't used in practice), but the idea is this: even with a network that big, ResNets are still very effective. 
   - [He et al., 2015. Deep residual networks for image recognition]
 
 ### Why ResNets work
 
-- Lets see some example that illustrates why resNet work.
+- We know that for a network to do well on a test set, the minimum requirement and assumption is for it to perform well on the training set. As ResNets perform well enough on even very deep networks, we can play this to our advantage.
+- Let's see an example that illustrates why ResNet work.
 
   - We have a big NN as the following:
 
     - `X --> Big NN --> a[l]`
 
-  - Lets add two layers to this network as a residual block:
+  - Let's add two layers to this network as a residual block:
 
     - `X --> Big NN --> a[l] --> Layer1 --> Layer2 --> a[l+2]`
-    - And a`[l]` has a direct connection to `a[l+2]`
+    - And a`[l]` has a direct (skip) connection to `a[l+2]`
 
   - Suppose we are using RELU activations.
 
   - Then:
 
     - ```
-      a[l+2] = g( z[l+2] + a[l] )
+      a[l+2] = g( z[l+2] + a[l] )  #a[2] comes from skip connection we just added
       	   = g( W[l+2] a[l+1] + b[l+2] + a[l] )
       ```
 
-  - Then if we are using L2 regularization for example, `W[l+2]` will be zero. Lets say that `b[l+2]` will be zero too.
+  - Then if we are using L2 regularization, `W[l+2]` will shrink. 
 
-  - Then `a[l+2] = g( a[l] ) = a[l]` with no negative values.
+  - If `W[l+2]` goes to zero (and for the sake for argument `b[l+2]` goes to zero), then `a[l+2] = g( a[l] ) = a[l]`. Why `a[l]`? It's because `a[l]` is the output of a ReLU block (and is non-negative), so the ReLU return the non-negative value only. 
 
-  - This show that identity function is easy for a residual block to learn. And that why it can train deeper NNs.
+  - This show that identity function is easy for a residual block to learn, i.e. we got `a[l]=a[l+2]` even when we added two extra layers. 
+  
+  - Therefore, if we wish to train deeper NNs, but some layers actually don't possess much significance, ResNets ensure that the identity function is easily learnt and make the network behave as thought the two layers did not exist. Therefore, it makes it easier for us to train deeper networks. 
 
-  - Also that the two layers we added doesn't hurt the performance of big NN we made.
+  - Another point to note: if I added two extra layers to a plain net, it is actually difficult for such a network to pick the right parameters to learn an identity function properly. It cannot be guaranteed that the performance of plain nets will not worsen in case more layers are added. 
+  
+ - In case of ResNets, we are guaranteed that worst case, the ResNet just learns the identity function; in the best case, it learns more. Therefore, we are guaranteed that in case more layers are added, performance will either remain the same/improve. 
 
-  - Hint: dimensions of z[l+2] and a[l] have to be the same in resNets. In case they have different dimensions what we put a matrix parameters (Which can be learned or fixed)
+  - Hint: dimensions of z[l+2] and a[l] have to be the same in resNets (this is why most ResNets use 'same' convolutions). In case they have different dimensions, we multiply by a matrix `Ws` to ensure equality of dimensions (which can be either learned or fixed).
 
-    - `a[l+2] = g( z[l+2] + ws * a[l] ) # The added Ws should make the dimensions equal`
-    - ws also can be a zero padding.
+    - `a[l+2] = g( z[l+2] + Ws * a[l] ) # The added Ws should make the dimensions equal`
+    - `Ws` also can be a zero padding.
 
-- Using a skip-connection helps the gradient to backpropagate and thus helps you to train deeper networks
+- Using a skip-connection helps the gradient to backpropagate and thus helps you to train deeper networks.
 
 - Lets take a look at ResNet on images.
 
   - Here are the architecture of **ResNet-34**:
   - ![](Images/resNet.jpg)
-  - All the 3x3 Conv are same Convs.
+  - All the 3x3 Conv are same Convs. 
   - Keep it simple in design of the network.
   - spatial size /2 => # filters x2
   - No FC layers, No dropout is used.
@@ -505,14 +511,16 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 
 - What does a 1 X 1 convolution do? Isn't it just multiplying by a number?
 
-  - Lets first consider an example:
+  - Let's first consider an example:
     - Input: `6x6x1`
     - Conv: `1x1x1` one filter.        `# The 1 x 1 Conv`
     - Output: `6x6x1`
+      - In this example, yes. 1 x 1 just multiplies.
   - Another example:
     - Input: `6x6x32`
     - Conv: `1x1x32` 5 filters.     `# The 1 x 1 Conv`
     - Output: `6x6x5`
+      - 1 x 1 makes a little more sense here.
 
 - The Network in Network is proposed in [Lin et al., 2013. Network in network]
 
@@ -521,7 +529,7 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 - A 1 x 1 convolution is useful when:
 
   - We want to shrink the number of channels. We also call this feature transformation.
-    - In the second discussed example above we have shrinked the input from 32 to 5 channels.
+    - Let's say we have an input of 28x28x192. Each filter is of size 1x1x192. Each of the 192 numbers is multiplied with the other 192 numbers, and we get one number for each of the 28x28 squares. This process is repeated for 32 filters, and we get 28x28x32 dimensional output. 
   - We will later see that by shrinking it we can save a lot of computations.
   - If we have specified the number of 1 x 1 Conv filters to be the same as the input number of channels then the output will contain the same number of channels. Then the 1 x 1 Conv will act like a non linearity and will learn non linearity operator. 
 
@@ -533,23 +541,23 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 
 ### Inception network motivation
 
-- When you design a CNN you have to decide all the layers yourself. Will you pick a 3 x 3 Conv or 5 x 5 Conv or maybe a max pooling layer. You have so many choices.
-- What **inception** tells us is, Why not use all of them at once?
+- When you design a CNN you have to decide all the layers yourself. Will you pick a 3 x 3 Conv or 5 x 5 Conv or maybe a max pooling layer? You have so many choices.
+- What **inception** tells us is, why not use all of them at once?
 - **Inception module**, naive version:
   - ![](Images/13.png)
-  - Hint that max-pool are same here.
-  - Input to the inception module are 28 x 28 x 192 and the output are 28 x 28 x 256
-  - We have done all the Convs and pools we might want and will let the NN learn and decide which it want to use most.
+  - Hint: all convolutional and max-pool layers are 'same' here. This is to ensure dimensions are the same. 
+  - Input to the inception module is 28 x 28 x 192 and the output is 28 x 28 x 256. 
+  - Instead of manually picking our choices, we perform all the convolutions and pools that we might want. We will let the NN learn and decide which it want to use most.
   - [[Szegedy et al. 2014. Going deeper with convolutions]](https://arxiv.org/abs/1409.4842)
 - The problem of computational cost in Inception model:
-  - If we have just focused on a 5 x 5 Conv that we have done in the last example.
-  - There are 32 same filters of 5 x 5, and the input are 28 x 28 x 192.
-  - Output should be 28 x 28 x 32
+  - Let's just focus on 5 x 5 Conv that we have done in the last example.
+  - There are 32 same filters of 5 x 5, and the inputs are 28 x 28 x 192.
+  - Output should be 28 x 28 x 32.
   - The total number of multiplications needed here are:
     - Number of outputs * Filter size * Filter size * Input dimensions
     - Which equals: `28 * 28 * 32 * 5 * 5 * 192 = 120 Mil` 
     - 120 Mil multiply operation still a problem in the modern day computers.
-  - Using a 1 x 1 convolution we can reduce 120 mil to just 12 mil. Lets see how.
+  - Using a 1 x 1 convolution we can reduce 120 mil to just 12 mil. Let's see how.
 - Using 1 X 1 convolution to reduce computational cost:
   - The new architecture are:
     - X0 shape is (28, 28, 192)
@@ -562,7 +570,7 @@ Here is the course summary as given on the course [link](https://www.coursera.or
     - For the first Conv: `28 * 28 * 16 * 1 * 1 * 192 = 2.5 Mil`
     - For the second Conv: `28 * 28 * 32 * 5 * 5 * 16 = 10 Mil`
     - So the total number are 12.5 Mil approx. which is so good compared to 120 Mil
-- A 1 x 1 Conv here is called Bottleneck `BN`.
+- A 1 x 1 Conv here is called Bottleneck `BN`. Why? It takes a huge volume as input, shrinks it to an intermediate volume, and then performs further computations.
 - It turns out that the 1 x 1 Conv won't hurt the performance.
 - **Inception module**, dimensions reduction version:
   - ![](Images/14.png)
