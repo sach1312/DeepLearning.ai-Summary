@@ -572,19 +572,19 @@ Here is the course summary as given on the course [link](https://www.coursera.or
     - So the total number are 12.5 Mil approx. which is so good compared to 120 Mil
 - A 1 x 1 Conv here is called Bottleneck `BN`. Why? It takes a huge volume as input, shrinks it to an intermediate volume, and then performs further computations.
 - It turns out that the 1 x 1 Conv won't hurt the performance.
-- **Inception module**, dimensions reduction version:
-  - ![](Images/14.png)
-- Example of inception model in Keras:
-  - ![](Images/inception_block1a.png)
 
 ### Inception network (GoogleNet)
-
-- The inception network consist of concatenated blocks of the Inception module.
+- **Inception module**
+  - ![](Images/14.png)
+  - Why is there a 1x1 convolution after the maxpooling? It's because the maxpool outputs 192 channels, which is a lot. Therefore, we wish to reduce the number of channels. 
+- The inception network consists of many inception modules concatenated on top of each other. 
+- The research paper consists of some side branches that are added. What is the purpose of a side branch? It tries to make a prediction directly from a hidden layer, instead of computing a prediction only on the output. 
+- Such a side branch has a regularizing effect. 
+- Example of inception model in Keras:
+  - ![](Images/inception_block1a.png)
 - The name inception was taken from a *meme* image which was taken from **Inception movie**
 - Here are the full model:
   - ![](Images/15.png)
-- Some times a Max-Pool block is used before the inception module to reduce the dimensions of the inputs.
-- There are a 3 Sofmax branches at different positions to push the network toward its goal. and helps to ensure that the intermediate features are good enough to the network to learn and it turns out that softmax0 and sofmax1 gives regularization effect.
 - Since the development of the Inception module, the authors and the others have built another versions of this network. Like inception v2, v3, and v4. Also there is a network that has used the inception module and the ResNet together.
 - [[Szegedy et al., 2014, Going Deeper with Convolutions]](https://arxiv.org/abs/1409.4842)
 
@@ -594,75 +594,80 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 - It turns out that a lot of these NN are difficult to replicated. because there are some details that may not presented on its papers. There are some other reasons like:
   - Learning decay.
   - Parameter tuning.
-- A lot of deep learning researchers are opening sourcing their code into Internet on sites like [Github](Github.com).
+- A lot of deep learning researchers are open-sourcing their code into Internet on sites like [Github](Github.com).
+- Notes on using GitHub:
+  - git clone <link>: will download contents of link to your local system, i.e clones repository to hard disk. 
 - If you see a research paper and you want to build over it, the first thing you should do is to look for an open source implementation for this paper.
-- Some advantage of doing this is that you might download the network implementation along with its parameters/weights. The author might have used multiple GPUs and spent some weeks to reach this result and its right in front of you after you download it.
+- One advantage of doing this is that you might download the network implementation along with its parameters/weights. The author might have used multiple GPUs and spent some weeks to reach this result and it's right in front of you after you download it. Transfer learning may also be easy to put into practice in such a case. 
 
 ### Transfer Learning
 
 - If you are using a specific NN architecture that has been trained before, you can use this pretrained parameters/weights instead of random initialization to solve your problem.
 - It can help you boost the performance of the NN.
 - The pretrained models might have trained on a large datasets like ImageNet, Ms COCO, or pascal and took a lot of time to learn those parameters/weights with optimized hyperparameters. This can save you a lot of time.
-- Lets see an example:
-  - Lets say you have a cat classification problem which contains 3 classes Tigger, Misty and neither.
-  - You don't have much a lot of data to train a NN on these images.
-  - Andrew recommends to go online and download a good NN with its weights, remove the softmax activation layer and put your own one and make the network learn only the new layer while other layer weights are fixed/frozen.
-  - Frameworks have options to make the parameters frozen in some layers using `trainable = 0` or `freeze = 0`
-  - One of the tricks that can speed up your training, is to run the pretrained NN without final softmax layer and get an intermediate representation of your images and save them to disk. And then use these representation to a shallow NN network. This can save you the time needed to run an image through all the layers.
-    - Its like converting your images into vectors.
+- Let's see an example:
+  - Let's say you have a cat classification problem which contains 3 classes: Tigger, Misty and neither.
+  - You might not have a lot of data to train a NN on these images.
+  - Andrew recommends to go online and download a good NN (implementation + weights), remove the softmax activation layer and put your own one (to classify into just Tigger/Misty/neither). Make the network learn only the new layer while other layer weights are fixed/frozen.
+  - Frameworks have options to make the parameters frozen in some layers using `trainable = 0` or `freeze = 1`.
+  - One of the tricks that can speed up your training, is to run the pretrained NN without final softmax layer and get an intermediate representation of your images and save them to disk. Then, use this representation to train a shallow NN network. This can save you the time needed to run an image through all the layers.
+    - It's like converting your images into vectors.
 - Another example:
-  - What if in the last example you have a lot of pictures for your cats.
+  - What if you have a lot of pictures for your cats, i.e. what if your training set is big?
   - One thing you can do is to freeze few layers from the beginning of the pretrained network and learn the other weights in the network.
-  - Some other idea is to throw away the layers that aren't frozen and put your own layers there.
+  - Another idea is to throw away the layers that aren't frozen and put your own layers there. Generally, as a rule of thumb, if you have a large amount of data, then you can train upon a large number of layers (and freeze a smaller number). 
 - Another example:
-  - If you have enough data, you can fine tune all the layers in your pretrained network but don't random initialize the parameters, leave the learned parameters as it is and learn from there. 
+  - If you have enough data, you can fine tune all the layers in your pretrained network. However, instead of randomly initialize the parameters, initialize them to the weights downloaded from open source implementation.
+- Bottomline: unless you have exceptional amounts of data and computational power, transfer learning is almost always the preferred way to go. 
 
 ### Data Augmentation
 
-- If data is increased, your deep NN will perform better. Data augmentation is one of the techniques that deep learning uses to increase the performance of deep NN.
-- The majority of computer vision applications needs more data right now.
+- Not all deep NNs require insane data sizes, but computer vision problems **definitely** do. When it feels like there isn't enough data for CV problems, data augmentation is a very useful technique to apply. 
 - Some data augmentation methods that are used for computer vision tasks includes:
-  - Mirroring.
+  - Mirroring (use only if whatever we're trying to identify is preserved in the picture after mirroring).
   - Random cropping.
     - The issue with this technique is that you might take a wrong crop.
-    - The solution is to make your crops big enough.
+    - The solution is to make your crops reasonably large subsets of the actual image.
   - Rotation.
-  - Shearing.
+  - Shearing (distort by an angle i.e | | => / /).
   - Local warping.
   - Color shifting.
     - For example, we add to R, G, and B some distortions that will make the image identified as the same for the human but is different for the computer.
-    - In practice the added value are pulled from some probability distribution and these shifts are some small.
-    - Makes your algorithm more robust in changing colors in images. 
-    - There are an algorithm which is called ***PCA color augmentation*** that decides the shifts needed automatically.
+    - In practice, the added value are pulled from some probability distribution and these shifts are small.
+    - Makes your algorithm more robust in changing colors in image, caused by something as simple as a sunlight angle change. 
+    - There are an algorithm which is called ***PCA color augmentation*** that decides the shifts needed automatically, so that the overall tint of all the images remains the same.
 - Implementing distortions during training:
-  - You can use a different CPU thread to make you a distorted mini batches while you are training your NN.
-- Data Augmentation has also some hyperparameters. A good place to start is to find an open source data augmentation implementation and then use it or fine tune these hyperparameters.
+  - One CPU thread (a thread is a process) is responsible for constantly loading images from the hard disk, while another thread implements training. Often, both threads run in parallel. 
+- Data Augmentation has also some hyperparameters (how much colour shifting? how do I 'randomly' crop?). A good place to start is to find an open source data augmentation implementation and then use it, or fine tune these hyperparameters yourself.
 
 ### State of Computer Vision
 
-- For a specific problem we may have a little data for it or a lots of data.
-- Speech recognition problems for example has a big amount of data, while image recognition has a medium amount of data and the object detection has a small amount of data nowadays.
+- For a specific problem we may have either little data, or lots of data.
+- Nowadays, speech recognition problems for example has a big amount of data, while image recognition (identifying what an image is) has a medium amount of data and object detection (putting a bounding box around a particular object, as part of a larger image) has a small amount of data. 
 - If your problem has a large amount of data, researchers are tend to use:
   - Simpler algorithms.
-  - Less hand engineering.
-- If you don't have that much data people tend to try more hand engineering for the problem "Hacks". Like choosing a more complex NN architecture.
+  - Less hand engineering (i.e., they implement more hacks, or workarounds, essentially ensuring that all the features/architecture/components of the problem are well-designed).
+- It can be thought of like this. There are two sources of knowledge for an ML problem:
+  - data
+  - hand engineering
+- If you don't have one, people rely on the other, i.e., if you don't have that much data people tend to try more hand engineering for the problem, like choosing a more complex NN architecture. It makes no sense to rely on hand engineering when there's a lot of data out there. 
 - Because we haven't got that much data in a lot of computer vision problems, it relies a lot on hand engineering.
-- We will see in the next chapter that because the object detection has less data, a more complex NN architectures will be presented.
+- We will see that since the object detection problem has less data, more complex NN architectures/transfer learning techniques will be presented.
 - Tips for doing well on benchmarks/winning competitions:
   - Ensembling.
-    - Train several networks independently and average their outputs. Merging down some classifiers.
+    - Train several networks independently and average their outputs (NOT the weight). Merging down some classifiers.
     - After you decide the best architecture for your problem, initialize some of that randomly and train them independently.
     - This can give you a push by 2%
     - But this will slow down your production by the number of the ensembles. Also it takes more memory as it saves all the models in the memory.
-    - People use this in competitions but few uses this in a real production.
+    - People use this in competitions but few use this in a real production.
   - Multi-crop at test time.
     - Run classifier on multiple versions of test versions and average results.
-    - There is a technique called 10 crops that uses this.
-    - This can give you a better result in the production.
-- Use open source code
-  - Use architectures of networks published in the literature.
-  - Use open source implementations if possible.
-  - Use pretrained models and fine-tune on your dataset.
+    - There is a technique called 10-crop that uses this: take the image, and 4 different crops of it. Run through classifier. Then, take the mirrored image, and 4 different crops of it. Run through classifier. Eventually, 10 (1+4+1+4) versions of the same image run through the classifier. 
+    - This can give you a better result in the production system. Moreover, memory is lesser compared to ensembling (but runtime is still long). 
+  - Use open source code
+    - Use architectures of networks published in literature.
+    - Use open source implementations if possible.
+    - Use pretrained models and fine-tune on your dataset.
 
 ## Object detection
 
