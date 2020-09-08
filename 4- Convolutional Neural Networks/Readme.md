@@ -834,12 +834,13 @@ Here is the course summary as given on the course [link](https://www.coursera.or
   - ![](Images/24.png)
 
   1. Let's say we have an image of 100 X 100.
-  2. Place a 3 x 3 grid on the image. For more smoother results you should use a finer grid (like 19 x 19 for the 100 x 100).
-  3. Apply the classification and localization algorithm (discussed in a previous section) to each section of the grid. `bx` and `by` will represent the center point of the object in each grid and will be relative to the box so the range is between 0 and 1 while `bh` and `bw` will represent the height and width of the object, which can be greater than 1.0 but still a floating point value.
+  2. Place a 3 x 3 grid on the image. For smoother results you should use a finer grid (like 19 x 19 for the 100 x 100).
+  3. Apply the classification and localization algorithm (discussed in a previous section) to each section of the grid. To assign coordinates, we will assume that the upper left corner of the grid cell is (0,0) and the bottom right corner is (1,1); the other co-ordinates are assigned accordingly. `bx` and `by` will represent the center point of the object (relative to the grid cell) while `bh` and `bw` will represent the height and width of the object as fractions of the height and width of the grid cell. 
+     Note that `bx` and `by` must lie between 0 and 1, but `bh` and `bw` can be greater than 1. Also note that there are alternatives to this mode of parametrization. 
   4. Do everything at once with the convolution sliding window. If Y shape is 1 x 8 (Pc, bx, by, bh, bw, c1, c2, c3) as we discussed before then the output of the 100 x 100 image should be 3 x 3 x 8. Each of the 1 x 1 x 8 that makes up the 3 x 3 x 8 corresponds to one square of the grid. 
-  5. Merging the results using predicted localization mid point.
+  5. If an object spans multiple grid cells, then you assign the object to the grid cell which contains the midpoint of the object. Therefore, only one grid will predict the occurrence of an object. 
 
-- We have a problem if we have found more than one object in one grid box.
+- We have a problem if we have found more than one object in one grid cell.
 
 - One of the best advantages that makes the YOLO algorithm popular is that it has a great speed and a Conv net implementation.
 
@@ -851,69 +852,74 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 ### Intersection Over Union
 
 - Intersection Over Union is a function used to evaluate the object detection algorithm.
-- It computes size of intersection and divide it by the union. More generally, *IoU* *is a measure of the overlap between two bounding boxes*.
+- It computes `size of intersection/size of the union`. More generally, *IoU* *is a measure of the overlap between two bounding boxes*.
+- While IoU is a general measure for overlap between any two bounding boxes, it can be used a performance measure for object localization, if computed between the actual bounding box and the predicted bounding box. 
 - For example:
   - ![](Images/25.png)
   - The red is the labeled output and the purple is the predicted output.
   - To compute Intersection Over Union we first compute the union area of the two rectangles which is "the first rectangle + second rectangle" Then compute the intersection area between these two rectangles.
   - Finally `IOU = intersection area / Union area`
-- If `IOU >=0.5` then its good. The best answer will be 1.
+- If `IOU >=0.5`, then the prediction is correct. 
+- The best value of IoU is 1.
 - The higher the IOU the better is the accuracy.
 
 ### Non-max Suppression
 
-- One of the problems we have addressed in YOLO is that it can detect an object multiple times.
-- Non-max Suppression is a way to make sure that YOLO detects the object just once.
+- One of the problems that the YOLO faces, is that it can detect an object multiple times.
+- Non-max Suppression is a way to make sure that YOLO detects each object just once.
 - For example:
   - ![](Images/26.png)
-  - Each car has two or more detections with different probabilities. This came from some of the grids that thinks that this is the center point of the object.
-- Non-max suppression algorithm:
-  1. Lets assume that we are targeting one class as an output class.
-  2. Y shape should be `[Pc, bx, by, bh, hw]` Where Pc is the probability if that object occurs.
-  3. Discard all boxes with `Pc < 0.6`  
-  4. While there are any remaining boxes:
-     1. Pick the box with the largest Pc Output that as a prediction.
-     2. Discard any remaining box with `IoU > 0.5` with that box output in the previous step i.e any box with high overlap(greater than overlap threshold of 0.5).
+  - The grid cells surrounding the one containing the midpoint may report that the car is contained in them, and therefore each car has two or more detections - with multiple probabilities. 
+- How Non-max suppression algorithm works:
+  1. This algorithm is being described for only one class. Therefore, discard C1,C2,C3 etc so that output looks like `[Pc,bx,by,bh,bw]`.  
+  2. Discard all boxes with Pc<=0.6.
+  3. Out of all the grid cells that report the presence of an object, pick the box with the largest Pc. 
+  4. Now consider the remaining grid cells. If the IoU of this grid cell, with the grid cell obtained in the previous step, is >0.5, then discard that box. (basically high IoU indicates that the boxes are overlapping).
+  5. Repeat steps 3 and 4, starting with the box with the next highest probability - until all the boxes have either been chosen (as a prediction) or discarded.
+  
 - If there are multiple classes/object types `c` you want to detect, you should run the Non-max suppression `c` times, once for every output class.
 
 ### Anchor Boxes
 
-- In YOLO, a grid only detects one object. What if a grid cell wants to detect multiple object?
+- In YOLO, a grid cell can only detect one object. What if a grid cell wants to detect multiple objects?
   - ![](Images/27.png)
-  - Car and person grid is same here.
+  - The midpoint of car and person are in the same grid cell (and are almost the same).
   - In practice this happens rarely.
-- The idea of Anchor boxes helps us solving this issue.
+- The idea of Anchor boxes helps us in solving this issue. Define two anchor boxes, one in landscape and one in perspective mode.
 - If Y = `[Pc, bx, by, bh, bw, c1, c2, c3]` Then to use two anchor boxes like this:
-  - Y = `[Pc, bx, by, bh, bw, c1, c2, c3, Pc, bx, by, bh, bw, c1, c2, c3]`  We simply have repeated  the one anchor Y.
+  - Y = `[Pc, bx, by, bh, bw, c1, c2, c3, Pc, bx, by, bh, bw, c1, c2, c3]`. The first set of parameters correspond to the first anchor box, and the second to the second. We simply have repeated the one anchor Y.
   - The two anchor boxes you choose should be known as a shape:
     - ![](Images/28.png)
-- So Previously, each object in training image is assigned to grid cell that contains that object's midpoint.
-- With two anchor boxes, Each object in training image is assigned to grid cell that contains object's midpoint and anchor box for the grid cell with <u>highest IoU</u>. You have to check where your object should be based on its rectangle closest to which anchor box.
+- So previously, each object in training image is assigned to grid cell that contains that object's midpoint.
+- In this mode of implementation, we have defined two anchor boxes for each grid cell. Therefore, each object in the training image is assigned to a grid cell that contains object's midpoint, as well as to an anchor box for the grid cell with <u>highest IoU</u>, i.e. the encoding of each object is now (grid cell, anchor box). The anchor box is chosen based on higher IoU.
 - Example of data:
   - ![](Images/29.png)
-  - Where the car was near the anchor 2 than anchor 1.
+  - In this case, the car resembled anchor 2 more. Moreover, only a car is present in the grid cell- no object matches to anchor box 1. 
+- This algorithm fails when:
+  - we have more than two objects' midpoints in a grid cell (happens rarely, though).
+  - multiple objects in the same grid cell all correspond to the same anchor box
 - You may have two or more anchor boxes but you should know their shapes.
-  - how do you choose the anchor boxes and people used to just choose them by hand. Maybe five or ten anchor box shapes that spans a variety  of shapes that cover the types of objects you seem to detect frequently.
-  - You may also use a k-means algorithm on your dataset to specify that.
-- Anchor boxes allows your algorithm to specialize, means in our case to easily detect wider images or taller ones.
+  - How do you choose the anchor boxes? People used to just choose them by hand- maybe five or ten anchor box shapes that span a variety of shapes, to cover the types of objects that you detect frequently.
+  - You may also use a k-means algorithm on your dataset to specify the shapes of anchor boxes.
+- Anchor boxes allow your algorithm to specialize, i.e. easily detects wider images or taller ones.
 
 ### YOLO Algorithm
 
-- YOLO is a state-of-the-art object detection model that is fast and accurate
+- YOLO is a state-of-the-art object detection model that is fast and accurate.
 
-- Lets sum up and introduce the whole YOLO algorithm given an example.
+- Let's sum up and introduce the whole YOLO algorithm, given an example.
 
-- Suppose we need to do object detection for our autonomous driver system.It needs to identify three classes:
+- Suppose we need to do object detection for our autonomous driver system. It needs to identify three classes:
 
   1. Pedestrian (Walks on ground).
   2. Car.
   3. Motorcycle.
 
-- We decided to choose two anchor boxes, a taller one and a wide one.
+- We decided to choose two anchor boxes, a taller one and a wide one . 
 
-  - Like we said in practice they use five or more anchor boxes hand made or generated using k-means.
+  - In practice, we may use five or more handmade anchor boxes, or we may generate them using k-means.
 
-- Our labeled Y shape will be `[Ny, HeightOfGrid, WidthOfGrid, 16]`, where Ny is number of instances and each row (of size 16) is as follows:
+- The output y would be either 3 x 3 x 2 x 8 or 3 x 3 x 16 in this case. Our labeled Y shape will be `[Ny, HeightOfGrid, WidthOfGrid, 16]`, where Ny is number of instances and each row (of size 16) is as follows:
 
   - `[Pc, bx, by, bh, bw, c1, c2, c3, Pc, bx, by, bh, bw, c1, c2, c3]`
 
