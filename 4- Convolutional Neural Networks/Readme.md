@@ -835,8 +835,8 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 
   1. Let's say we have an image of 100 X 100.
   2. Place a 3 x 3 grid on the image. For more smoother results you should use a finer grid (like 19 x 19 for the 100 x 100).
-  3. Apply the classification and localization algorithm (discussed in a previous section) to each section of the grid. `bx` and `by` will represent the center point of the object in each grid and will be relative to the box so the range is between 0 and 1 while `bh` and `bw` will represent the height and width of the object which can be greater than 1.0 but still a floating point value.
-  4. Do everything at once with the convolution sliding window. If Y shape is 1 x 8 as we discussed before then the output of the 100 x 100 image should be 3 x 3 x 8 which corresponds to 9 cell results.
+  3. Apply the classification and localization algorithm (discussed in a previous section) to each section of the grid. `bx` and `by` will represent the center point of the object in each grid and will be relative to the box so the range is between 0 and 1 while `bh` and `bw` will represent the height and width of the object, which can be greater than 1.0 but still a floating point value.
+  4. Do everything at once with the convolution sliding window. If Y shape is 1 x 8 (Pc, bx, by, bh, bw, c1, c2, c3) as we discussed before then the output of the 100 x 100 image should be 3 x 3 x 8. Each of the 1 x 1 x 8 that makes up the 3 x 3 x 8 corresponds to one square of the grid. 
   5. Merging the results using predicted localization mid point.
 
 - We have a problem if we have found more than one object in one grid box.
