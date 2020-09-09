@@ -1202,37 +1202,40 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 
 #### Siamese Network
 
-- We will implement the similarity function using a type of NNs called Siamease Network in which we can pass multiple inputs to the two or more networks with the same architecture and parameters.
-- Siamese network architecture are as the following:
+- We will implement the similarity function using a type of NNs called Siamese Network, in which we can pass multiple inputs to two or more networks with the same architecture and parameters.
+- Siamese network architecture is as below:
   - ![](Images/35.png)
-  - We make 2 identical conv nets which encodes an input image into a vector. In the above image the vector shape is (128, )
+  - We train a ConvNet so that it takes an image and outputs a vector of 128 numbers, which essentially represents the **encoding** of the input image. The encoding of image x1 is f(x1). 
+  - How are the parameters of the network learned? The parameters are learned (i.e. the network learns to assign encoding, such that) such that the loss function is small if the given pair of images are of the same person, and large if they are of different people.
   - The loss function will be `d(x1, x2) = || f(x1) - f(x2) ||^2`
   - If `X1`, `X2` are the same person, we want d to be low. If they are different persons, we want d to be high.
   - [[Taigman et. al., 2014. DeepFace closing the gap to human level performance]](https://www.cv-foundation.org/openaccess/content_cvpr_2014/html/Taigman_DeepFace_Closing_the_2014_CVPR_paper.html)
 
 #### Triplet Loss
 
-- Triplet Loss is one of the loss functions we can use to solve the similarity distance in a Siamese network.
+- Triplet Loss is one of the loss functions that we can use to practically implement differences in a Siamese network.
 - Our learning objective in the triplet loss function is to get the distance between an **Anchor** image and a **positive** or a **negative** image.
   - Positive means same person, while negative means different person.
-- The triplet name came from that we are comparing an anchor A with a positive P and a negative N image.
-- Formally we want:
+- The triplet name came from that we are comparing an anchor A with a positive P and a negative N image (there are 3 images involved at a time).
+- Therefore, we want:
   - Positive distance to be less than negative distance
-  - `||f(A) - f(P)||^2  <= ||f(A) - f(N)||^2`
+  - `||f(A) - f(P)||^2  <= ||f(A) - f(N)||^2` or `d(A,P) <= d(A,N)`
   - Then
   - `||f(A) - f(P)||^2  - ||f(A) - f(N)||^2 <= 0`
-  - To make sure the NN won't get an output of zeros easily:
+  - Note that outputting the encoding as 0/same value for all the images (trivial o/p) also satisfies this condition. To make sure that the NN doesn't get away with such an output: 
   - `||f(A) - f(P)||^2  - ||f(A) - f(N)||^2 <= -alpha`
-    - Alpha is a small number. Sometimes its called the margin.
+    - Alpha is a small number. Sometimes it's called the margin.
+    - Having the margin also ensures that the quantities differ sufficiently from each other, instead of one being just greater than another. 
   - Then
   - `||f(A) - f(P)||^2  - ||f(A) - f(N)||^2 + alpha <= 0`
-- Final Loss function:
+- Final loss function:
   - Given 3 images (A, P, N)
   - `L(A, P, N) = max (||f(A) - f(P)||^2  - ||f(A) - f(N)||^2 + alpha , 0)`
-  - `J = Sum(L(A[i], P[i], N[i]) , i)` for all triplets of images.
-- You need multiple images of the same person in your dataset. Then get some triplets out of your dataset. Dataset should be big enough.
+  - `J = Sum(L(A[i], P[i], N[i]) , i)` for all triplets of images. 
+  - Note that if the first term of the max function is greater than 0, then it will be included in the loss function, and hence will end up being minimised along the way.
+- Dataset should be big enough, because you need multiple images of the same person in your dataset; then only you can get some triplets out of your dataset. 
 - Choosing the triplets A, P, N:
-  - During training if A, P, N are chosen randomly (Subjet to A and P are the same and A and N aren't the same) then one of the problems this constrain is easily satisfied 
+  - During training if A, P, N are chosen randomly (subject to A and P are the same and A and N aren't the same) then one of the problems this constraint is easily satisfied 
     - `d(A, P) + alpha <= d (A, N)` 
     - So the NN wont learn much
   - What we want to do is choose triplets that are **hard** to train on.
