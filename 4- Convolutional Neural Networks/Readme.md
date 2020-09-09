@@ -911,27 +911,29 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 
 - Suppose we need to do object detection for our autonomous driver system. It needs to identify three classes:
 
-  1. Pedestrian (Walks on ground).
+  1. Pedestrian.
   2. Car.
   3. Motorcycle.
 
-- We decided to choose two anchor boxes, a taller one and a wide one . 
+- We decided to choose two anchor boxes, a taller one and a wide one (i.e. landscape and portrait). 
 
-  - In practice, we may use five or more handmade anchor boxes, or we may generate them using k-means.
+  - In practice, we may use five or more hand-made anchor boxes, or we may generate them using k-means.
 
 - The output y would be either 3 x 3 x 2 x 8 or 3 x 3 x 16 in this case. Our labeled Y shape will be `[Ny, HeightOfGrid, WidthOfGrid, 16]`, where Ny is number of instances and each row (of size 16) is as follows:
 
   - `[Pc, bx, by, bh, bw, c1, c2, c3, Pc, bx, by, bh, bw, c1, c2, c3]`
 
-- Your dataset could be an image with a multiple labels and a rectangle for each label, we should go to your dataset and make the shape and values of Y like we agreed.
-
   - An example:
     - ![](Images/30.png)
-  - We first initialize all of them to zeros and ?, then for each label and rectangle choose its closest grid point then the shape to fill it and then the best anchor point based on the IOU. so that the shape of Y for one image should be `[HeightOfGrid, WidthOfGrid,16]`
+  - Shape of Y for one image should be `[HeightOfGrid, WidthOfGrid,16]`
 
-- Train the labeled images on a Conv net. you should receive an output of `[HeightOfGrid, WidthOfGrid,16]` for our case.
+- Train the labeled images on a ConvNet. You should receive an output of `[HeightOfGrid, WidthOfGrid,16]` for our case.
 
-- To make predictions, run the Conv net on an image and run Non-max suppression algorithm for each class you have in our case there are 3 classes.
+- To make predictions, run the ConvNet on an image and run Non-max suppression algorithm for each class you have. In our case, there are 3 classes.
+  - This is what the algorithm looks like:
+    - For each grid cell, get 2 predicted bounding boxes.
+    - Get rid of low probability predictions.
+    - For each class, use non-max prediction to generate final predictions (run the algorithm to detect presence of each class). 
 
   - You could get something like that:
     - ![](Images/31.png)
@@ -941,7 +943,7 @@ Here is the course summary as given on the course [link](https://www.coursera.or
   - Then get the best probability followed by the IOU filtering:
     - ![](Images/33.png)
 
-- YOLO are not good at detecting smaller object.
+- YOLO is not very good at detecting smaller objects.
 
 - [YOLO9000 Better, faster, stronger](https://arxiv.org/abs/1612.08242)
 
@@ -1170,30 +1172,33 @@ Here is the course summary as given on the course [link](https://www.coursera.or
 #### What is face recognition?
 
 - Face recognition system identifies a person's face. It can work on both images or videos.
-- **<u>Liveness detection</u>** within a video face recognition system prevents the network from identifying a face in an image. It can be learned by supervised deep learning using a dataset for live human and in-live human and sequence learning.
+- **<u>Liveness detection</u>** within a video face recognition system, prevents the network from identifying a face in an image (i.e., it would be able to distinguish the presence of a real human being, versus an image of them being shown to a camera). It can be learned by supervised deep learning using a dataset for live human versus non-live human. 
+- However, we will stick to face recognition. 
 - Face verification vs. face recognition:
-  - Verification:
-    - Input: image, name/ID. (1 : 1)
-    - Output: whether the input image is that of the claimed person.
+  - Verification (1 : 1 problem):
+    - Input: image, name/ID. 
+    - Output: whether the input image is that of the claimed person
     - "is this the claimed person?"
-  - Recognition:
+  - Recognition (1 : k problem):
     - Has a database of K persons
     - Get an input image
     - Output ID if the image is any of the K persons (or not recognized)
     - "who is this person?"
-- We can use a face verification system to make a face recognition system. The accuracy of the verification system has to be high (around 99.9% or more) to be use accurately within a recognition system because the recognition system accuracy will be less than the verification system given K persons. 
+- We can use a face verification system to make a face recognition system. 
+- Since the accuracy of the recognition system depends on whether all K persons are correctly identified, its accuracy will be less than that of the verification system.
+- Therefore, the accuracy of the verification system has to be high (around 99.9% or more) to be used accurately within a recognition system.
 
 #### One Shot Learning
 
 - One of the face recognition challenges is to solve one shot learning problem.
-- One Shot Learning: A recognition system is able to recognize a person, learning from one image.
-- Historically deep learning doesn't work well with a small number of data.
-- Instead to make this work, we will learn a **similarity function**:
-  - d( **img1**, **img2** ) = degree of difference between images.
-  - We want d result to be low in case of the same faces.
+- One Shot Learning is when a recognition system is able to recognize a person after learning from one image. However, we know that deep learning usually doesn't work well with such a small amount of data. (Therefore, training a softmax, etc. is useless).
+- Instead, we will learn a **similarity function**:
+  - d( **img1**, **img2** ) = degree of difference between the two kimages.
+  - We want d result to be low in case of images of the same person (i.e. similar images, low d).
   - We use tau T as a threshold for d:
     - If d( **img1**, **img2** ) <= T    Then the faces are the same.
-- Similarity function helps us solving the one shot learning. Also its robust to new inputs.
+    tau is a hyperparameter.
+- Similarity function helps us solve the one shot learning problem. Also, it's robust to new inputs.
 
 #### Siamese Network
 
